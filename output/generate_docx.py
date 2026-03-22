@@ -17,8 +17,8 @@ import datetime
 
 # ─── 경로 설정 ───
 BASE_DIR = "/Users/jaydenkang/Desktop/New Projects/20260321_노트북LM 책쓰기"
-DRAFT_PATH = os.path.join(BASE_DIR, "draft-final.md")
-OUTPUT_PATH = os.path.join(BASE_DIR, "NotebookLM_final.docx")
+DRAFT_PATH = os.path.join(BASE_DIR, "draft", "draft-final.md")
+OUTPUT_PATH = os.path.join(BASE_DIR, "output", "NotebookLM_final.docx")
 FONT_DIR = os.path.join(BASE_DIR, "font")
 
 # ─── 색상 상수 ───
@@ -369,7 +369,7 @@ def create_cover_page(doc, font_name):
     # 부제
     p = doc.add_paragraph()
     p.alignment = center
-    run = p.add_run("팀장을 위한 실전 활용법 20선")
+    run = p.add_run("팀장이 바로 쓰는 실전 활용법 20")
     set_font_for_run(run, font_name, 16, color=COLOR_MED_BLUE)
     set_paragraph_spacing(p, before=0, after=24)
 
@@ -469,7 +469,7 @@ def setup_document(doc, font_name):
 
     # 문서 속성
     doc.core_properties.author = "AI ROASTING"
-    doc.core_properties.title = "노트북LM으로 다 됨: 팀장을 위한 실전 활용법 20선"
+    doc.core_properties.title = "노트북LM으로 다 됨: 팀장이 바로 쓰는 실전 활용법 20"
 
 
 def process_markdown(doc, md_text, font_name):
