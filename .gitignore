@@ -1,0 +1,4 @@
+.DS_Store
+*.backup
+font/
+__pycache__/
