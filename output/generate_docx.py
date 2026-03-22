@@ -173,10 +173,25 @@ def add_styled_table(doc, headers, rows, font_name):
             if col_idx < num_cols:
                 cell = row.cells[col_idx]
                 cell.text = ""
-                p = cell.paragraphs[0]
-                # 셀 안의 마크다운 서식을 실제 서식으로 변환
-                process_inline_formatting(p, cell_text.strip(), font_name, 10, COLOR_BLACK)
-                set_paragraph_spacing(p, before=0, after=0, line_spacing=1.0)
+                text = cell_text.strip()
+                # <br> + <sm> 태그 처리: 줄바꿈 후 작은 글씨
+                if '<br>' in text:
+                    parts = text.split('<br>', 1)
+                    p = cell.paragraphs[0]
+                    process_inline_formatting(p, parts[0].strip(), font_name, 10, COLOR_BLACK)
+                    set_paragraph_spacing(p, before=0, after=0, line_spacing=1.0)
+                    # 두 번째 줄 (작은 글씨)
+                    p2 = cell.add_paragraph()
+                    import re as _re
+                    sm_match = _re.search(r'<sm>(.*?)</sm>', parts[1])
+                    sm_text = sm_match.group(1) if sm_match else parts[1].strip()
+                    run2 = p2.add_run(sm_text)
+                    set_font_for_run(run2, font_name, 8, color=COLOR_GRAY)
+                    set_paragraph_spacing(p2, before=0, after=0, line_spacing=1.0)
+                else:
+                    p = cell.paragraphs[0]
+                    process_inline_formatting(p, text, font_name, 10, COLOR_BLACK)
+                    set_paragraph_spacing(p, before=0, after=0, line_spacing=1.0)
                 # 줄무늬 배경
                 if row_idx % 2 == 1:
                     shading = parse_xml(f'<w:shd {nsdecls("w")} w:fill="F2F7FB" w:val="clear"/>')
@@ -196,6 +211,16 @@ def add_styled_table(doc, headers, rows, font_name):
         f'</w:tblBorders>'
     )
     tblPr.append(borders)
+
+    # 표가 페이지 중간에서 잘리지 않도록 keep_together + keep_with_next 적용
+    # 단, 행이 10개 이상인 긴 표는 페이지 분할을 허용한다
+    if len(rows) <= 10:
+        for row in table.rows:
+            for cell in row.cells:
+                for paragraph in cell.paragraphs:
+                    pPr = paragraph._element.get_or_add_pPr()
+                    pPr.append(parse_xml(f'<w:keepLines {nsdecls("w")}/>'))
+                    pPr.append(parse_xml(f'<w:keepNext {nsdecls("w")}/>'))
 
     doc.add_paragraph()  # 표 후 간격
     return table
@@ -321,7 +346,20 @@ def strip_markdown(text):
 
 
 def process_inline_formatting(paragraph, text, font_name, size=11, color=COLOR_BLACK, base_bold=False):
-    """인라인 마크다운(**볼드**, *이탤릭*, `코드`) 처리. ** 기호를 제거하고 실제 서식으로 변환"""
+    """인라인 마크다운(**볼드**, *이탤릭*, `코드`, <br>) 처리. ** 기호를 제거하고 실제 서식으로 변환"""
+    # <br> 태그를 soft line break로 변환
+    from docx.oxml import OxmlElement
+    if '<br>' in text:
+        segments = text.split('<br>')
+        for seg_i, seg in enumerate(segments):
+            if seg:
+                process_inline_formatting(paragraph, seg, font_name, size, color, base_bold)
+            if seg_i < len(segments) - 1:
+                run = paragraph.add_run()
+                br = OxmlElement('w:br')
+                run._element.append(br)
+        return
+
     # **볼드**, *이탤릭*, `코드`를 모두 처리
     pattern = r'(\*\*.*?\*\*|\*[^*]+?\*|`[^`]+?`)'
     parts = re.split(pattern, text)
@@ -353,7 +391,7 @@ def create_cover_page(doc, font_name):
     center = WD_ALIGN_PARAGRAPH.CENTER
 
     # 상단 여백
-    for _ in range(7):
+    for _ in range(12):
         p = doc.add_paragraph()
         set_paragraph_spacing(p, before=0, after=0)
 
@@ -463,7 +501,7 @@ def setup_document(doc, font_name):
     fp = footer.paragraphs[0] if footer.paragraphs else footer.add_paragraph()
     fp.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = fp.add_run()
-    set_font_for_run(run, font_name, 9, color=COLOR_GRAY)
+    set_font_for_run(run, font_name, 8, color=COLOR_GRAY)
     fldChar1 = parse_xml(f'<w:fldChar {nsdecls("w")} w:fldCharType="begin"/>')
     run._element.append(fldChar1)
     run2 = fp.add_run()
@@ -473,7 +511,7 @@ def setup_document(doc, font_name):
     fldChar2 = parse_xml(f'<w:fldChar {nsdecls("w")} w:fldCharType="separate"/>')
     run3._element.append(fldChar2)
     run4 = fp.add_run("1")
-    set_font_for_run(run4, font_name, 9, color=COLOR_GRAY)
+    set_font_for_run(run4, font_name, 8, color=COLOR_GRAY)
     run5 = fp.add_run()
     fldChar3 = parse_xml(f'<w:fldChar {nsdecls("w")} w:fldCharType="end"/>')
     run5._element.append(fldChar3)
@@ -605,6 +643,9 @@ def process_markdown(doc, md_text, font_name):
                 # B5 기준 본문 폭 약 12.6cm, 이미지는 그보다 약간 작게
                 run.add_picture(img_path, width=Cm(11.5))
                 set_paragraph_spacing(p, before=8, after=2)
+                # 이미지와 캡션이 같은 페이지에 있도록 keep_with_next
+                pPr = p._element.get_or_add_pPr()
+                pPr.append(parse_xml(f'<w:keepNext {nsdecls("w")}/>'))
                 # 캡션
                 cap_p = doc.add_paragraph()
                 cap_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
