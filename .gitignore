@@ -3,3 +3,9 @@
 font/
 __pycache__/
 draft/
+.omc/
+.awf/
+.env
+.env.*
+*.pem
+*.key

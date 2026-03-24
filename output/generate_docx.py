@@ -13,10 +13,9 @@ from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.enum.section import WD_ORIENT
 from docx.oxml.ns import qn, nsdecls
 from docx.oxml import parse_xml
-import datetime
 
 # ─── 경로 설정 ───
-BASE_DIR = "/Users/jaydenkang/Desktop/New Projects/20260321_노트북LM 책쓰기"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DRAFT_PATH = os.path.join(BASE_DIR, "draft", "draft-final.md")
 OUTPUT_PATH = os.path.join(BASE_DIR, "output", "NotebookLM_final.docx")
 FONT_DIR = os.path.join(BASE_DIR, "font")
@@ -182,8 +181,7 @@ def add_styled_table(doc, headers, rows, font_name):
                     set_paragraph_spacing(p, before=0, after=0, line_spacing=1.0)
                     # 두 번째 줄 (작은 글씨)
                     p2 = cell.add_paragraph()
-                    import re as _re
-                    sm_match = _re.search(r'<sm>(.*?)</sm>', parts[1])
+                    sm_match = re.search(r'<sm>(.*?)</sm>', parts[1])
                     sm_text = sm_match.group(1) if sm_match else parts[1].strip()
                     run2 = p2.add_run(sm_text)
                     set_font_for_run(run2, font_name, 8, color=COLOR_GRAY)
@@ -808,6 +806,10 @@ def main():
 
     # 마크다운 읽기
     print("draft-final.md 읽는 중...")
+    if not os.path.exists(DRAFT_PATH):
+        print(f"오류: 입력 파일을 찾을 수 없습니다 — {DRAFT_PATH}")
+        print("힌트: /write 스킬을 먼저 실행해 draft/draft-final.md를 생성하세요.")
+        return
     with open(DRAFT_PATH, 'r', encoding='utf-8') as f:
         md_text = f.read()
     print(f"총 {len(md_text):,}자 읽음")
@@ -844,7 +846,15 @@ def main():
 
     # 저장
     print(f"저장 중: {OUTPUT_PATH}")
-    doc.save(OUTPUT_PATH)
+    try:
+        doc.save(OUTPUT_PATH)
+    except PermissionError:
+        print(f"오류: 파일이 다른 프로그램에서 열려 있습니다 — {OUTPUT_PATH}")
+        print("힌트: Word/LibreOffice에서 해당 파일을 닫고 다시 실행하세요.")
+        return
+    except OSError as e:
+        print(f"오류: 파일 저장 실패 — {e}")
+        return
     print("=" * 60)
     print(f"완료! {OUTPUT_PATH}")
     print("=" * 60)
