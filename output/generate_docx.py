@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-라이트(퍼블리셔): draft-final.md → NotebookLM_final.docx 변환 스크립트
-B5 판형, Pretendard 폰트, 전문 서식 적용
+퍼블리셔: 11_draft-final.md → final.docx 변환 스크립트
+오픈클로 101가지 활용법 — B5 판형, Pretendard 폰트, 전문 서식 적용
 """
 
 import re
@@ -16,8 +16,8 @@ from docx.oxml import parse_xml
 
 # ─── 경로 설정 ───
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-DRAFT_PATH = os.path.join(BASE_DIR, "draft", "draft-final.md")
-OUTPUT_PATH = os.path.join(BASE_DIR, "output", "NotebookLM_final.docx")
+DRAFT_PATH = os.path.join(BASE_DIR, "draft", "11_draft-final.md")
+OUTPUT_PATH = os.path.join(BASE_DIR, "output", "final.docx")
 FONT_DIR = os.path.join(BASE_DIR, "font")
 
 # ─── 색상 상수 ───
@@ -515,7 +515,7 @@ def setup_document(doc, font_name):
     run5._element.append(fldChar3)
 
     # 문서 속성
-    doc.core_properties.author = "AI ROASTING"
+    doc.core_properties.author = "레오클로"
     doc.core_properties.title = "노트북LM으로 다 됨: 팀장이 바로 쓰는 실전 활용법 20"
 
 
