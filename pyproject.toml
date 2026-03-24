@@ -1,0 +1,10 @@
+[project]
+name = "book-publishing"
+version = "0.1.0"
+description = "AI 책쓰기 — Word 문서 생성 도구"
+requires-python = ">=3.10"
+dependencies = [
+    "python-docx>=1.2.0",
+    "matplotlib>=3.10.0",
+    "numpy>=2.2.0",
+]

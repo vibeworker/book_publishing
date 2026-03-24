@@ -3,6 +3,7 @@
 font/
 __pycache__/
 draft/
+.venv/
 .omc/
 .awf/
 .env
